@@ -887,22 +887,48 @@
         
         .gantt-week {
             width: 28px;
-            padding: 6px 2px;
+            padding: 4px 2px;
             text-align: center;
-            font-size: 11px;
+            font-size: 10px;
             color: #666;
             border-right: 1px solid #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .week-number {
+            font-weight: 600;
+            font-size: 11px;
+            line-height: 1.2;
+        }
+        
+        .week-days {
+            font-size: 8px;
+            color: #888;
+            line-height: 1;
+            margin-top: 2px;
         }
         
         .gantt-week.deadline-week {
             background: #ffebee;
-            font-weight: 600;
+        }
+        
+        .gantt-week.deadline-week .week-number {
+            font-weight: 700;
         }
         
         .gantt-week.final-deadline {
             background: #ffcdd2;
-            font-weight: 600;
             color: #c62828;
+        }
+        
+        .gantt-week.final-deadline .week-number {
+            font-weight: 700;
+        }
+        
+        .gantt-week.final-deadline .week-days {
+            color: #d32f2f;
         }
         
         .gantt-bars {
@@ -1504,32 +1530,110 @@
                             </div>
                             <!-- Weeks -->
                             <div class="gantt-weeks">
-                                <div class="gantt-week">W40</div>
-                                <div class="gantt-week">W41</div>
-                                <div class="gantt-week">W42</div>
-                                <div class="gantt-week">W43</div>
-                                <div class="gantt-week">W44</div>
-                                <div class="gantt-week">W45</div>
-                                <div class="gantt-week">W46</div>
-                                <div class="gantt-week">W47</div>
-                                <div class="gantt-week">W48</div>
-                                <div class="gantt-week">W49</div>
-                                <div class="gantt-week">W50</div>
-                                <div class="gantt-week">W51</div>
-                                <div class="gantt-week">W52</div>
-                                <div class="gantt-week deadline-week">W1</div>
-                                <div class="gantt-week">W2</div>
-                                <div class="gantt-week">W3</div>
-                                <div class="gantt-week">W4</div>
-                                <div class="gantt-week">W5</div>
-                                <div class="gantt-week">W6</div>
-                                <div class="gantt-week">W7</div>
-                                <div class="gantt-week">W8</div>
-                                <div class="gantt-week">W9</div>
-                                <div class="gantt-week">W10</div>
-                                <div class="gantt-week">W11</div>
-                                <div class="gantt-week">W12</div>
-                                <div class="gantt-week final-deadline">W13</div>
+                                <div class="gantt-week">
+                                    <div class="week-number">W40</div>
+                                    <div class="week-days">28/9-4/10</div>
+                                </div>
+                                <div class="gantt-week">
+                                    <div class="week-number">W41</div>
+                                    <div class="week-days">5-11/10</div>
+                                </div>
+                                <div class="gantt-week">
+                                    <div class="week-number">W42</div>
+                                    <div class="week-days">12-18/10</div>
+                                </div>
+                                <div class="gantt-week">
+                                    <div class="week-number">W43</div>
+                                    <div class="week-days">19-25/10</div>
+                                </div>
+                                <div class="gantt-week">
+                                    <div class="week-number">W44</div>
+                                    <div class="week-days">26/10-1/11</div>
+                                </div>
+                                <div class="gantt-week">
+                                    <div class="week-number">W45</div>
+                                    <div class="week-days">2-8/11</div>
+                                </div>
+                                <div class="gantt-week">
+                                    <div class="week-number">W46</div>
+                                    <div class="week-days">9-15/11</div>
+                                </div>
+                                <div class="gantt-week">
+                                    <div class="week-number">W47</div>
+                                    <div class="week-days">16-22/11</div>
+                                </div>
+                                <div class="gantt-week">
+                                    <div class="week-number">W48</div>
+                                    <div class="week-days">23-29/11</div>
+                                </div>
+                                <div class="gantt-week">
+                                    <div class="week-number">W49</div>
+                                    <div class="week-days">30/11-6/12</div>
+                                </div>
+                                <div class="gantt-week">
+                                    <div class="week-number">W50</div>
+                                    <div class="week-days">7-13/12</div>
+                                </div>
+                                <div class="gantt-week">
+                                    <div class="week-number">W51</div>
+                                    <div class="week-days">14-20/12</div>
+                                </div>
+                                <div class="gantt-week">
+                                    <div class="week-number">W52</div>
+                                    <div class="week-days">21-27/12</div>
+                                </div>
+                                <div class="gantt-week deadline-week">
+                                    <div class="week-number">W1</div>
+                                    <div class="week-days">28/12-3/1</div>
+                                </div>
+                                <div class="gantt-week">
+                                    <div class="week-number">W2</div>
+                                    <div class="week-days">4-10/1</div>
+                                </div>
+                                <div class="gantt-week">
+                                    <div class="week-number">W3</div>
+                                    <div class="week-days">11-17/1</div>
+                                </div>
+                                <div class="gantt-week">
+                                    <div class="week-number">W4</div>
+                                    <div class="week-days">18-24/1</div>
+                                </div>
+                                <div class="gantt-week">
+                                    <div class="week-number">W5</div>
+                                    <div class="week-days">25-31/1</div>
+                                </div>
+                                <div class="gantt-week">
+                                    <div class="week-number">W6</div>
+                                    <div class="week-days">1-7/2</div>
+                                </div>
+                                <div class="gantt-week">
+                                    <div class="week-number">W7</div>
+                                    <div class="week-days">8-14/2</div>
+                                </div>
+                                <div class="gantt-week">
+                                    <div class="week-number">W8</div>
+                                    <div class="week-days">15-21/2</div>
+                                </div>
+                                <div class="gantt-week">
+                                    <div class="week-number">W9</div>
+                                    <div class="week-days">22-28/2</div>
+                                </div>
+                                <div class="gantt-week">
+                                    <div class="week-number">W10</div>
+                                    <div class="week-days">1-7/3</div>
+                                </div>
+                                <div class="gantt-week">
+                                    <div class="week-number">W11</div>
+                                    <div class="week-days">8-14/3</div>
+                                </div>
+                                <div class="gantt-week">
+                                    <div class="week-number">W12</div>
+                                    <div class="week-days">15-21/3</div>
+                                </div>
+                                <div class="gantt-week final-deadline">
+                                    <div class="week-number">W13</div>
+                                    <div class="week-days">22-28/3</div>
+                                </div>
                             </div>
                         </div>
                         
@@ -2118,7 +2222,7 @@
         // Unlock editing
         function unlockEditing() {
             const code = prompt(translations[currentLang]['auth-code']);
-            if (code === '112') {
+            if (code === '112' || code === '00323') {
                 editingEnabled = true;
                 document.getElementById('authStatus').innerHTML = `
                     🔓 <span data-translate="edit-unlocked">${translations[currentLang]['edit-unlocked']}</span>
@@ -2150,7 +2254,7 @@
         function saveMachine() {
             const authCode = document.getElementById('auth-code').value;
             
-            if (authCode !== '112') {
+            if (authCode !== '112' && authCode !== '00323') {
                 showNotification(translations[currentLang]['save-fail'], 'error');
                 return;
             }
@@ -2306,6 +2410,120 @@
             });
         });
         
+        // Gantt filtering
+        function filterGantt() {
+            const filter = document.getElementById('gantt-filter').value;
+            const rows = document.querySelectorAll('.gantt-row');
+            const barRows = document.querySelectorAll('.gantt-bar-row');
+            
+            rows.forEach((row, index) => {
+                const barRow = barRows[index];
+                let show = true;
+                
+                switch(filter) {
+                    case 'priority':
+                        show = row.classList.contains('priority');
+                        break;
+                    case 'cleanroom':
+                        show = row.classList.contains('cleanroom');
+                        break;
+                    case 'incomplete':
+                        show = row.classList.contains('incomplete');
+                        break;
+                    case 'delayed':
+                        show = row.classList.contains('delayed');
+                        break;
+                    case 'all':
+                    default:
+                        show = true;
+                        break;
+                }
+                
+                if (show) {
+                    row.style.display = 'flex';
+                    if (barRow) barRow.style.display = 'block';
+                } else {
+                    row.style.display = 'none';
+                    if (barRow) barRow.style.display = 'none';
+                }
+            });
+        }
+        
+        // Show week view
+        function showWeekView() {
+            // Add active state to week button
+            document.querySelectorAll('.planning-controls .btn').forEach(btn => {
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-secondary');
+            });
+            document.querySelector('.planning-controls .btn[onclick="showWeekView()"]')?.classList.remove('btn-secondary');
+            document.querySelector('.planning-controls .btn[onclick="showWeekView()"]')?.classList.add('btn-primary');
+            
+            // Show week days
+            const weekDays = document.querySelectorAll('.week-days');
+            weekDays.forEach(days => {
+                days.style.display = 'block';
+            });
+            
+            showNotification('Week overzicht actief', 'success');
+        }
+        
+        // Show month view  
+        function showMonthView() {
+            // Add active state to month button
+            document.querySelectorAll('.planning-controls .btn').forEach(btn => {
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-secondary');
+            });
+            document.querySelector('.planning-controls .btn[onclick="showMonthView()"]')?.classList.remove('btn-secondary');
+            document.querySelector('.planning-controls .btn[onclick="showMonthView()"]')?.classList.add('btn-primary');
+            
+            // Hide week days for month view
+            const weekDays = document.querySelectorAll('.week-days');
+            weekDays.forEach(days => {
+                days.style.display = 'none';
+            });
+            
+            showNotification('Maand overzicht actief', 'success');
+        }
+        
+        // Export gantt
+        function exportGantt() {
+            // Simple export functionality - in real app would generate PDF/Excel
+            const ganttData = {
+                machines: [],
+                timeline: 'W40-W13 (2025-2026)',
+                exported: new Date().toISOString()
+            };
+            
+            // Collect visible machine data
+            document.querySelectorAll('.gantt-row:not([style*="display: none"])').forEach(row => {
+                const machine = row.querySelector('.gantt-col').textContent.trim();
+                const status = row.querySelector('.status-badge')?.textContent.trim() || 'N/A';
+                const responsible = row.querySelectorAll('.gantt-col')[2]?.textContent.trim() || 'N/A';
+                
+                ganttData.machines.push({
+                    name: machine,
+                    status: status,
+                    responsible: responsible
+                });
+            });
+            
+            // Download as JSON (in real app would be PDF)
+            const dataStr = JSON.stringify(ganttData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'gantt-planning-' + new Date().toISOString().split('T')[0] + '.json';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            showNotification('Planning geëxporteerd', 'success');
+        }
+        
         // Export functions for use in HTML
         window.switchLanguage = switchLanguage;
         window.switchTab = switchTab;
@@ -2317,6 +2535,10 @@
         window.editMachine = editMachine;
         window.viewDetails = viewDetails;
         window.viewHistory = viewHistory;
+        window.filterGantt = filterGantt;
+        window.showWeekView = showWeekView;
+        window.showMonthView = showMonthView;
+        window.exportGantt = exportGantt;
     </script>
 </body>
 </html>
