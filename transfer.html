@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Machine Transfer Management System - Boxtel</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --primary: #FF6B00; --secondary: #003DA5; --success: #4CAF50; --warning: #FF9800; --danger: #f44336; --dark: #2c3e50; --light: #ecf0f1; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; background: linear-gradient(135deg, #003DA5 0%, #FF6B00 100%); min-height: 100vh; padding: 15px; }
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.9); z-index: 2000; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 15px; transition: opacity 0.3s; }
+        .spinner { width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+        .loading-overlay.hidden { opacity: 0; pointer-events: none; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .language-toggle { position: fixed; top: 20px; right: 20px; z-index: 1001; display: flex; gap: 5px; background: white; padding: 5px; border-radius: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+        .lang-btn { padding: 8px 15px; border: none; background: transparent; cursor: pointer; border-radius: 20px; font-weight: 600; transition: all 0.3s; }
+        .lang-btn.active { background: var(--primary); color: white; }
+        .container { max-width: 1600px; margin: 0 auto; background: rgba(255, 255, 255, 0.98); border-radius: 15px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden; }
+        .header { background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%); color: white; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+        .header h1 { font-size: 24px; font-weight: 700; }
+        .header-info { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+        .deadline { background: rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 8px; font-size: 14px; font-weight: 500; }
+        .deadline.critical { background: rgba(244,67,54,0.3); animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        .auth-status { display: flex; align-items: center; gap: 8px; padding: 8px 15px; border-radius: 8px; font-size: 13px; }
+        .auth-status.locked { background: rgba(244,67,54,0.2); }
+        .nav-tabs { display: flex; background: #f8f9fa; padding: 0; border-bottom: 2px solid #e0e0e0; overflow-x: auto; }
+        .nav-tab { padding: 12px 20px; cursor: pointer; background: none; border: none; font-size: 14px; font-weight: 500; color: #666; transition: all 0.3s; position: relative; white-space: nowrap; }
+        .nav-tab.active { color: var(--primary); background: white; }
+        .nav-tab.active::after { content: ''; position: absolute; bottom: -2px; left: 0; right: 0; height: 3px; background: var(--primary); }
+        .control-panel { padding: 15px 20px; background: #f8f9fa; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.3s; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+        .btn-primary { background: var(--primary); color: white; }
+        .search-box { flex: 1; min-width: 200px; max-width: 400px; }
+        .search-box input { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
+        .content { padding: 20px; min-height: 500px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .stat-card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: transform 0.3s; border-left: 4px solid var(--primary); }
+        .table-container { background: white; border-radius: 10px; overflow-x: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #f0f0f0; white-space: nowrap; }
+        th { background: #f8f9fa; font-weight: 600; color: #666; font-size: 12px; text-transform: uppercase; }
+        .status-badge { display: inline-block; padding: 4px 10px; border-radius: 15px; font-size: 11px; font-weight: 600; }
+        .status-in-productie { background: #e3f2fd; color: #1976d2; } .status-demontage { background: #fff3e0; color: #f57c00; } .status-wacht-op-roy, .status-wacht-op-beslissing { background: #fef5e7; color: #f39c12; } .status-verschrot { background: #ffebee; color: #c62828; } .status-done { background: #f3e5f5; color: #7b1fa2; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; border-radius: 12px; width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto; animation: slideIn 0.3s; display: flex; flex-direction: column; }
+        @keyframes slideIn { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%); color: white; }
+        .modal-body { padding: 20px; flex-grow: 1; overflow-y: auto; }
+        .form-tabs { display: flex; gap: 5px; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .form-tab { padding: 8px 16px; background: none; border: none; color: #666; cursor: pointer; font-weight: 500; border-radius: 6px; }
+        .form-tab.active { background: var(--primary); color: white; }
+        .form-section { display: none; } .form-section.active { display: block; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 6px; font-weight: 500; font-size: 13px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .modal-footer { padding: 15px 20px; border-top: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #f8f9fa; }
+        .auth-input input { width: 100px; padding: 6px 10px; border: 2px solid #ddd; border-radius: 4px; }
+        .empty-state { text-align: center; padding: 50px; color: #999; }
+        .machine-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
+        .machine-card { background: white; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow: hidden; display: flex; flex-direction: column; }
+        .machine-card-header { padding: 15px; background: #f8f9fa; border-bottom: 1px solid #eee; }
+        .machine-card-header h4 { margin: 0; font-size: 16px; color: var(--secondary); }
+        .machine-card-body { padding: 15px; flex-grow: 1; }
+        .info-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; }
+        .info-row span:first-child { color: #666; }
+        .progress-bar-container { background: #eee; border-radius: 5px; height: 10px; overflow: hidden; margin-top: 10px; }
+        .progress-bar { background: var(--success); height: 100%; width: 0%; transition: width 0.5s; }
+        .machine-card-footer { padding: 10px 15px; background: #f8f9fa; display: flex; justify-content: flex-end; gap: 10px; }
+        .gantt-container { overflow-x: auto; padding: 10px; background: white; border-radius: 8px; }
+        .gantt-chart { display: grid; border-left: 1px solid #eee; border-bottom: 1px solid #eee; min-width: 1800px; }
+        .gantt-header { display: grid; font-weight: bold; background: #f8f9fa; border-bottom: 2px solid #ddd; }
+        .gantt-header-cell { text-align: center; padding: 8px 0; border-right: 1px solid #eee; font-size: 12px; }
+        .gantt-row { display: grid; border-top: 1px solid #eee; }
+        .gantt-row-header { padding: 10px; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-right: 1px solid #ddd; }
+        .gantt-bar { height: 20px; border-radius: 4px; margin: 5px 0; position: relative; }
+        .gantt-bar-afbouwen { background: #ffcdd2; border-left: 3px solid #f44336; }
+        .gantt-bar-transport { background: #c5cae9; border-left: 3px solid #3f51b5; }
+        .gantt-bar-opbouwen { background: #c8e6c9; border-left: 3px solid #4caf50; }
+        .checklist { list-style: none; padding: 0; }
+        .checklist li { margin-bottom: 10px; display: flex; align-items: center; }
+        .checklist input { margin-right: 10px; width: 18px; height: 18px; }
+        .notification { position: fixed; bottom: 20px; right: 20px; padding: 15px 20px; color: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); transform: translateY(120px); opacity: 0; transition: all 0.5s; z-index: 1100; }
+        .notification.show { transform: translateY(0); opacity: 1; }
+    </style>
+</head>
+<body>
+    <div class="loading-overlay" id="loading-overlay"><div class="spinner"></div><p>Łączenie z bazą danych...</p></div>
+    <div class="language-toggle">
+        <button class="lang-btn" onclick="switchLanguage('pl')">PL</button>
+        <button class="lang-btn active" onclick="switchLanguage('nl')">NL</button>
+        <button class="lang-btn" onclick="switchLanguage('en')">EN</button>
+    </div>
+    <div class="container">
+        <div class="header">
+             <h1><span>🏭</span> <span id="header-title">Machine Transfer Management - Boxtel</span></h1>
+             <div class="header-info">
+                <div class="deadline">📅 <span data-translate="deadline-control">Controle deadline</span>: 31.12.2025</div>
+                <div class="deadline critical">⚠️ <span data-translate="deadline-final">Finale deadline</span>: 31.03.2026</div>
+                <div class="auth-status locked" id="authStatus">🔒 <span data-translate="edit-locked">Wijzigen geblokkeerd</span></div>
+             </div>
+        </div>
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="switchTab(event, 'dashboard')">📊 <span data-translate="tab-dashboard">Dashboard</span></button>
+            <button class="nav-tab" onclick="switchTab(event, 'machines')">🔧 <span data-translate="tab-machines">Machines</span></button>
+            <button class="nav-tab" onclick="switchTab(event, 'planning')">📅 <span data-translate="tab-planning">Planning</span></button>
+            <button class="nav-tab" onclick="switchTab(event, 'team')">👥 <span data-translate="tab-team">Team</span></button>
+            <button class="nav-tab" onclick="switchTab(event, 'documents')">📁 <span data-translate="tab-documents">Documenten</span></button>
+        </div>
+        <div class="control-panel">
+            <button class="btn btn-primary" onclick="openModal()">➕ <span data-translate="add-machine">Machine toevoegen</span></button>
+            <button class="btn btn-secondary" onclick="exportToExcel()">📤 <span data-translate="export-excel">Eksportuj do Excel</span></button>
+            <button class="btn btn-success" id="unlock-btn" onclick="unlockEditing()">🔓 <span data-translate="unlock-edit">Ontgrendel</span></button>
+            <div class="search-box"><input type="text" id="search-input" data-translate-placeholder="search-placeholder"></div>
+        </div>
+        <div class="content">
+            <div id="dashboard" class="view active"><div class="stats-grid" id="stats-grid"></div><h3 style="margin: 20px 0 15px;" data-translate="recent-updates">Recente updates</h3><div class="table-container"><table id="machines-table"><thead><tr><th data-translate="machine-name">Machine</th><th>Nr.</th><th>Status</th><th data-translate="destination">Bestemming</th><th data-translate="notes">Opmerkingen</th><th data-translate="actions">Acties</th></tr></thead><tbody id="machines-table-body"></tbody></table></div></div>
+            <div id="machines" class="view" style="display: none;"><h3 style="margin-bottom: 20px;" data-translate="all-machines">Wszystkie Maszyny</h3><div id="machine-grid-container" class="machine-grid"></div></div>
+            <div id="planning" class="view" style="display: none;"><h3 style="margin-bottom: 20px;" data-translate="planning-title">Harmonogram Projektu</h3><div id="gantt-container" class="gantt-container"><div class="empty-state">Ładowanie harmonogramu...</div></div></div>
+            <div id="team" class="view" style="display: none;"><h3 style="margin-bottom: 20px;" data-translate="team-title">Zespół Projektowy</h3><div class="table-container"><table><thead><tr><th>Imię i Nazwisko</th><th>Rola</th><th>Zakres Odpowiedzialności</th><th>Kontakt</th></tr></thead><tbody id="team-table-body"></tbody></table></div></div>
+            <div id="documents" class="view" style="display: none;"><h3 style="margin-bottom: 20px;" data-translate="documents-title">Baza Dokumentów</h3><div class="table-container"><table><thead><tr><th>Nazwa Dokumentu</th><th data-translate="machine-name">Maszyna</th><th>Typ Dokumentu</th><th>Link</th></tr></thead><tbody id="documents-table-body"></tbody></table></div></div>
+        </div>
+    </div>
+    <div class="modal" id="machineModal">
+        <div class="modal-content">
+            <div class="modal-header"><h2><span id="modal-title" data-translate="add-edit-machine"></span></h2><button class="btn" onclick="closeModal()">×</button></div>
+            <div class="modal-body">
+                <input type="hidden" id="machine-id">
+                <div class="form-tabs">
+                    <button class="form-tab active" onclick="switchFormTab(event, 'basic')">Info</button>
+                    <button class="form-tab" onclick="switchFormTab(event, 'planning')">Planowanie</button>
+                    <button class="form-tab" onclick="switchFormTab(event, 'checklist')">Checklista</button>
+                </div>
+                <div class="form-section active" id="basic-section">
+                    <div class="form-row"><div class="form-group"><label data-translate="machine-type">Machine Type*</label><select id="machine-type"></select></div><div class="form-group"><label data-translate="machine-number">Machine Nummer</label><input type="text" id="machine-number"></div></div>
+                    <div class="form-row"><div class="form-group"><label>Status*</label><select id="machine-status"></select></div><div class="form-group"><label data-translate="destination">Bestemming*</label><select id="machine-destination"></select></div></div>
+                    <div class="form-group"><label data-translate="responsible-person">Verantwoordelijke*</label><select id="machine-responsible"></select></div>
+                    <div class="form-group"><label data-translate="notes">Opmerkingen</label><textarea id="machine-notes"></textarea></div>
+                </div>
+                <div class="form-section" id="planning-section">
+                    <div class="form-row"><div class="form-group"><label>Data demontażu (Afbouwen)</label><input type="date" id="dismantling-date"></div><div class="form-group"><label>Data transportu (Transport)</label><input type="date" id="transport-date"></div></div>
+                    <div class="form-group"><label>Data instalacji (Opbouwen)</label><input type="date" id="installation-date"></div>
+                </div>
+                <div class="form-section" id="checklist-section"><ul id="checklist" class="checklist"></ul></div>
+            </div>
+            <div class="modal-footer">
+                <div class="auth-input"><label data-translate="auth-code">Code:</label><input type="password" id="auth-code" placeholder="***" maxlength="3"></div>
+                <div class="modal-actions"><button class="btn" onclick="closeModal()">Anuluj</button><button class="btn btn-primary" onclick="saveMachine()">Zapisz</button></div>
+            </div>
+        </div>
+    </div>
+    <div class="notification" id="notification"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, addDoc, doc, setDoc, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        
+        const machinesCollection = collection(db, `/artifacts/${appId}/public/data/machines`);
+        const teamCollection = collection(db, `/artifacts/${appId}/public/data/team`);
+
+        let currentLang = 'nl', editingEnabled = false, authTimeout = null;
+        let allMachines = [], allTeam = [];
+        
+        const translations = {
+            pl: {'header-title': 'Zarządzanie Transferem Maszyn - Boxtel', 'deadline-control': 'Termin kontrolny', 'deadline-final': 'Termin ostateczny', 'edit-locked': 'Edycja zablokowana', 'edit-unlocked': 'Edycja dozwolona', 'role-admin': 'Administrator', 'tab-dashboard': 'Panel', 'tab-machines': 'Maszyny', 'tab-planning': 'Planowanie', 'tab-team': 'Zespół', 'tab-documents': 'Dokumenty', 'add-machine': 'Dodaj maszynę', 'export-excel': 'Eksportuj do Excel', 'unlock-edit': 'Odblokuj', 'lock-edit': 'Zablokuj', 'search-placeholder': '🔍 Szukaj...', 'total-machines': 'Wszystkie maszyny', 'to-cz': 'Do Czech', 'to-mexico': 'Do Meksyku', 'waiting': 'Oczekujące', 'recent-updates': 'Ostatnie aktualizacje', 'machine-name': 'Maszyna', 'destination': 'Cel', 'notes': 'Uwagi', 'actions': 'Akcje', 'add-edit-machine': 'Dodaj Maszynę', 'machine-type': 'Typ maszyny', 'machine-number': 'Numer maszyny', 'responsible-person': 'Osoba odpowiedzialna', 'auth-code': 'Kod:', 'save-success': '✓ Zmiany zapisane!', 'save-fail': '✗ Wymagana autoryzacja (kod: 112)', 'delete-confirm': 'Czy na pewno chcesz usunąć tę maszynę?', 'delete-success': '✓ Maszyna usunięta!', 'all-machines': 'Przegląd Maszyn', 'planning-title': 'Harmonogram Projektu (Wykres Gantta)', 'team-title': 'Zespół Projektowy', 'documents-title': 'Baza Dokumentów'},
+            nl: {'header-title': 'Machine Transfer Management - Boxtel', 'deadline-control': 'Controle deadline', 'deadline-final': 'Finale deadline', 'edit-locked': 'Wijzigen geblokkeerd', 'edit-unlocked': 'Wijzigen toegestaan', 'tab-dashboard': 'Dashboard', 'tab-machines': 'Machines', 'tab-planning': 'Planning', 'tab-team': 'Team', 'tab-documents': 'Documenten', 'add-machine': 'Machine toevoegen', 'export-excel': 'Exporteer naar Excel', 'unlock-edit': 'Ontgrendel', 'lock-edit': 'Vergrendel', 'search-placeholder': '🔍 Zoek machine...', 'total-machines': 'TOTAAL MACHINES', 'to-cz': 'NAAR CZ', 'to-mexico': 'NAAR MEXICO', 'waiting': 'WACHTEND', 'recent-updates': 'Recente updates', 'machine-name': 'Machine', 'destination': 'Bestemming', 'notes': 'Opmerkingen', 'actions': 'Acties', 'add-edit-machine': 'Machine Toevoegen', 'machine-type': 'Machine Type', 'machine-number': 'Nummer', 'responsible-person': 'Verantwoordelijke', 'auth-code': 'Code:', 'save-success': '✓ Wijzigingen opgeslagen!', 'save-fail': '✗ Autorisatie vereist (code: 112)', 'delete-confirm': 'Weet je zeker dat je deze machine wilt verwijderen?', 'delete-success': '✓ Machine succesvol verwijderd!', 'all-machines': 'Machine Overzicht', 'planning-title': 'Projectplanning (Gantt Chart)', 'team-title': 'Projectteam', 'documents-title': 'Documentendatabase'},
+            en: {'header-title': 'Machine Transfer Management - Boxtel', 'deadline-control': 'Control deadline', 'deadline-final': 'Final deadline', 'edit-locked': 'Editing locked', 'edit-unlocked': 'Editing allowed', 'tab-dashboard': 'Dashboard', 'tab-machines': 'Machines', 'tab-planning': 'Planning', 'tab-team': 'Team', 'tab-documents': 'Documents', 'add-machine': 'Add Machine', 'export-excel': 'Export to Excel', 'unlock-edit': 'Unlock', 'lock-edit': 'Lock', 'search-placeholder': '🔍 Search machine...', 'total-machines': 'TOTAL MACHINES', 'to-cz': 'TO CZ', 'to-mexico': 'TO MEXICO', 'waiting': 'WAITING', 'recent-updates': 'Recent updates', 'machine-name': 'Machine', 'destination': 'Destination', 'notes': 'Notes', 'actions': 'Actions', 'add-edit-machine': 'Add Machine', 'machine-type': 'Machine Type', 'machine-number': 'Number', 'responsible-person': 'Responsible', 'auth-code': 'Code:', 'save-success': '✓ Changes saved!', 'save-fail': '✗ Authorization required (code: 112)', 'delete-confirm': 'Are you sure you want to delete this machine?', 'delete-success': '✓ Machine deleted successfully!', 'all-machines': 'Machine Overview', 'planning-title': 'Project Schedule (Gantt Chart)', 'team-title': 'Project Team', 'documents-title': 'Document Database'}
+        };
+
+        const DYNAMIC_OPTIONS = {
+            'machine-type': ["Spuitgietmachine", "Spuitgietmachine 2K", "Duif", "Koot", "Bergstein", "Amori", "Tantec", "Deckel Maho DMU 50", "Sodick AG600L", "Arburg ALLROUNDER 320 C", "Anders"],
+            'machine-status': ["In productie", "Demontage", "Gereed transport", "Wacht op Roy", "Wacht op beslissing", "Done", "PPAP", "Verschrot"],
+            'machine-destination': ["CZ", "Mex", "Verschrot", "Daremon", "Hans", "Boerboom", "Niet toegewezen"],
+            'machine-responsible': ["Roy", "Jiri", "Hans", "Marcel", "Jon", "Patrick", "Wil", "Berry"]
+        };
+
+        const CHECKLIST_ITEMS = [
+            { id: 'media', label: 'Odłączenie mediów (elektryka, hydraulika)'},
+            { id: 'secure', label: 'Zabezpieczenie mechaniczne'},
+            { id: 'photo', label: 'Dokumentacja fotograficzna'},
+            { id: 'pack', label: 'Spakowanie części peryferyjnych'},
+            { id: 'ready', label: 'Gotowość do załadunku'},
+            { id: 'load', label: 'Załadunek i zabezpieczenie'},
+            { id: 'sent', label: 'Wysłanie'}
+        ];
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token); else await signInAnonymously(auth);
+            populateSelectOptions();
+            setupEventListeners();
+            loadAllData();
+        });
+        
+        function loadAllData() {
+            onSnapshot(machinesCollection, s => { allMachines = s.docs.map(d => ({ id: d.id, ...d.data() })); if (s.empty) seedDatabase(); else renderAllViews(); });
+            onSnapshot(teamCollection, s => { allTeam = s.docs.map(d => ({ id: d.id, ...d.data() })); renderTeamView(); });
+            document.getElementById('loading-overlay').classList.add('hidden');
+        }
+
+        function renderAllViews() {
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            const filtered = allMachines.filter(m => JSON.stringify(m).toLowerCase().includes(searchTerm));
+            renderDashboard(filtered);
+            renderMachinesView(filtered);
+            renderPlanningView(allMachines); // Gantt should show all machines for context
+            renderDocumentsView(filtered);
+        }
+
+        function renderDashboard(machines) {
+            const statsGrid = document.getElementById('stats-grid');
+            statsGrid.innerHTML = `
+                <div class="stat-card"><h3 data-translate="total-machines"></h3><div class="stat-value">${allMachines.length}</div></div>
+                <div class="stat-card" style="border-left-color: #1976d2;"><h3 data-translate="to-cz"></h3><div class="stat-value" style="color: #1976d2;">${allMachines.filter(m=>m.destination==='CZ').length}</div></div>
+                <div class="stat-card" style="border-left-color: #e65100;"><h3 data-translate="to-mexico"></h3><div class="stat-value" style="color: #e65100;">${allMachines.filter(m=>m.destination==='Mex').length}</div></div>
+                <div class="stat-card" style="border-left-color: #f44336;"><h3>VERSCHROT</h3><div class="stat-value" style="color: #f44336;">${allMachines.filter(m=>m.destination==='Verschrot').length}</div></div>
+                <div class="stat-card" style="border-left-color: #4CAF50;"><h3>DONE</h3><div class="stat-value" style="color: #4CAF50;">${allMachines.filter(m=>m.status==='Done').length}</div></div>
+                <div class="stat-card" style="border-left-color: #FF9800;"><h3 data-translate="waiting"></h3><div class="stat-value" style="color: #FF9800;">${allMachines.filter(m=>(m.status||'').includes('Wacht op')).length}</div></div>
+            `;
+            const tableBody = document.getElementById('machines-table-body');
+            tableBody.innerHTML = '';
+            [...machines].sort((a,b) => (b.lastUpdated||0) - (a.lastUpdated||0)).slice(0, 5).forEach(m => tableBody.innerHTML += `<tr><td>${m.type||''}</td><td>${m.number||'-'}</td><td><span class="status-badge status-${(m.status||'').toLowerCase().replace(/ /g,'-')}">${m.status||''}</span></td><td>${m.destination||''}</td><td>${m.notes||''}</td><td><div class="action-buttons"><button class="btn" onclick="window.editMachine('${m.id}')">✏️</button><button class="btn" onclick="window.deleteMachine('${m.id}')">🗑️</button></div></td></tr>`);
+            switchLanguage(currentLang);
+        }
+
+        function renderMachinesView(machines) {
+            const container = document.getElementById('machine-grid-container');
+            container.innerHTML = '';
+            machines.forEach(m => {
+                const checklistProgress = m.checklist ? (Object.values(m.checklist).filter(Boolean).length / CHECKLIST_ITEMS.length) * 100 : 0;
+                container.innerHTML += `
+                    <div class="machine-card">
+                        <div class="machine-card-header"><h4>${m.type} ${m.number || ''}</h4></div>
+                        <div class="machine-card-body">
+                            <div class="info-row"><span>Status:</span> <strong>${m.status || ''}</strong></div>
+                            <div class="info-row"><span>Cel:</span> <strong>${m.destination || ''}</strong></div>
+                            <div class="info-row"><span>Odpowiedzialny:</span> <strong>${m.responsible || ''}</strong></div>
+                            <div class="progress-bar-container"><div class="progress-bar" style="width: ${checklistProgress}%;"></div></div>
+                        </div>
+                        <div class="machine-card-footer">
+                            <button class="btn" onclick="window.editMachine('${m.id}')">Szczegóły</button>
+                        </div>
+                    </div>`;
+            });
+        }
+        
+        function renderPlanningView(machines) {
+            const container = document.getElementById('gantt-container');
+            const tasks = machines.filter(m => m.dismantlingDate || m.transportDate || m.installationDate);
+            if (tasks.length === 0) {
+                container.innerHTML = `<div class="empty-state">Brak danych do wyświetlenia harmonogramu.</div>`;
+                return;
+            }
+
+            const allDates = tasks.flatMap(t => [t.dismantlingDate, t.transportDate, t.installationDate]).filter(Boolean).map(d => new Date(d));
+            const minDate = new Date(Math.min.apply(null, allDates));
+            const maxDate = new Date(Math.max.apply(null, allDates));
+            minDate.setDate(minDate.getDate() - 7);
+            maxDate.setDate(maxDate.getDate() + 7);
+
+            let headerHtml = '<div class="gantt-row-header">Maszyna / Linia</div>';
+            let weeksHtml = '<div class="gantt-row-header" style="visibility: hidden;"></div>';
+            let currentDate = new Date(minDate);
+            let weekColumns = 0;
+            
+            while(currentDate <= maxDate) {
+                const week = getWeekNumber(currentDate);
+                const year = currentDate.getFullYear();
+                const month = currentDate.toLocaleString(currentLang, { month: 'short' });
+                headerHtml += `<div class="gantt-header-cell">${month} ${year}</div>`;
+                weeksHtml += `<div class="gantt-header-cell">T${week}</div>`;
+                currentDate.setDate(currentDate.getDate() + 7);
+                weekColumns++;
+            }
+            
+            let rowsHtml = '';
+            tasks.sort((a,b) => (a.type+a.number).localeCompare(b.type+b.number)).forEach(task => {
+                let barsHtml = '';
+                const taskStartDate = new Date(task.dismantlingDate || task.transportDate || task.installationDate);
+                const totalDays = (maxDate - minDate) / (1000 * 3600 * 24);
+
+                if(task.dismantlingDate) {
+                    const start = new Date(task.dismantlingDate);
+                    const end = new Date(task.transportDate || task.dismantlingDate);
+                    const left = ((start - minDate) / (1000 * 3600 * 24) / totalDays) * 100;
+                    const width = Math.max(0.5, ((end - start) / (1000 * 3600 * 24) / totalDays) * 100);
+                    barsHtml += `<div class="gantt-bar gantt-bar-afbouwen" style="position: absolute; left: ${left}%; width: ${width}%;"></div>`;
+                }
+                if(task.transportDate) {
+                    const start = new Date(task.transportDate);
+                    const end = new Date(task.installationDate || task.transportDate);
+                    const left = ((start - minDate) / (1000 * 3600 * 24) / totalDays) * 100;
+                    const width = Math.max(0.5, ((end - start) / (1000 * 3600 * 24) / totalDays) * 100);
+                    barsHtml += `<div class="gantt-bar gantt-bar-transport" style="position: absolute; left: ${left}%; width: ${width}%;"></div>`;
+                }
+                 if(task.installationDate) {
+                    const start = new Date(task.installationDate);
+                    const left = ((start - minDate) / (1000 * 3600 * 24) / totalDays) * 100;
+                    barsHtml += `<div class="gantt-bar gantt-bar-opbouwen" style="position: absolute; left: ${left}%; width: 2%;"></div>`;
+                }
+
+                rowsHtml += `
+                    <div class="gantt-row" style="grid-template-columns: 200px repeat(${weekColumns}, 1fr);">
+                        <div class="gantt-row-header">${task.type} ${task.number || ''}</div>
+                        <div style="grid-column: 2 / -1; position: relative;">${barsHtml}</div>
+                    </div>`;
+            });
+
+            container.innerHTML = `
+                <div class="gantt-chart">
+                    <div class="gantt-header" style="grid-template-columns: 200px repeat(${weekColumns}, 1fr);">
+                        ${weeksHtml}
+                    </div>
+                    ${rowsHtml}
+                </div>`;
+        }
+
+        function getWeekNumber(d) {
+            d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+            var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+            var weekNo = Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
+            return weekNo;
+        }
+
+        function renderTeamView() {
+            const tableBody = document.getElementById('team-table-body');
+            tableBody.innerHTML = '';
+            allTeam.forEach(t => tableBody.innerHTML += `<tr><td>${t.name}</td><td>${t.role}</td><td>${t.responsibilities}</td><td>${t.contact}</td></tr>`);
+        }
+        function renderDocumentsView(machines) {
+            const tableBody = document.getElementById('documents-table-body');
+            tableBody.innerHTML = '';
+            machines.forEach(m => {
+                if (m.documents && m.documents.length > 0) {
+                    m.documents.forEach(d => tableBody.innerHTML += `<tr><td>${d.name}</td><td>${m.type} ${m.number || ''}</td><td>${d.type}</td><td><a href="#">Otwórz</a></td></tr>`);
+                }
+            });
+        }
+        
+        window.saveMachine = async function() {
+            if (!editingEnabled || document.getElementById('auth-code').value !== '112') return showNotification(translations[currentLang]['save-fail'], 'error');
+            const id = document.getElementById('machine-id').value;
+            const checklist = {};
+            CHECKLIST_ITEMS.forEach(item => {
+                const cb = document.getElementById(`checklist-${item.id}`);
+                checklist[item.id] = cb ? cb.checked : false;
+            });
+            const data = {
+                type: document.getElementById('machine-type').value,
+                number: document.getElementById('machine-number').value,
+                status: document.getElementById('machine-status').value,
+                destination: document.getElementById('machine-destination').value,
+                responsible: document.getElementById('machine-responsible').value,
+                notes: document.getElementById('machine-notes').value,
+                dismantlingDate: document.getElementById('dismantling-date').value,
+                transportDate: document.getElementById('transport-date').value,
+                installationDate: document.getElementById('installation-date').value,
+                checklist: checklist,
+                lastUpdated: Date.now()
+            };
+            try {
+                if (id) await setDoc(doc(machinesCollection, id), data, { merge: true });
+                else await addDoc(machinesCollection, data);
+                showNotification(translations[currentLang]['save-success'], 'success');
+                closeModal();
+            } catch (error) { console.error("Save Error:", error); }
+        }
+
+        window.editMachine = function(id) {
+            if (!editingEnabled) return showNotification(translations[currentLang]['save-fail'], 'error');
+            const m = allMachines.find(m => m.id === id);
+            if(m) {
+                document.getElementById('modal-title').textContent = `Edytuj: ${m.type} ${m.number||''}`;
+                document.getElementById('machine-id').value = m.id;
+                document.getElementById('machine-type').value = m.type || '';
+                document.getElementById('machine-number').value = m.number || '';
+                document.getElementById('machine-status').value = m.status || '';
+                document.getElementById('machine-destination').value = m.destination || '';
+                document.getElementById('machine-responsible').value = m.responsible || '';
+                document.getElementById('machine-notes').value = m.notes || '';
+                document.getElementById('dismantling-date').value = m.dismantlingDate || '';
+                document.getElementById('transport-date').value = m.transportDate || '';
+                document.getElementById('installation-date').value = m.installationDate || '';
+                const checklistContainer = document.getElementById('checklist');
+                checklistContainer.innerHTML = '';
+                CHECKLIST_ITEMS.forEach(item => {
+                    const isChecked = m.checklist && m.checklist[item.id];
+                    checklistContainer.innerHTML += `<li><input type="checkbox" id="checklist-${item.id}" ${isChecked ? 'checked' : ''}><label for="checklist-${item.id}">${item.label}</label></li>`;
+                });
+                document.getElementById('machineModal').classList.add('active');
+            }
+        }
+        window.deleteMachine = async function(id) { /* ... existing code ... */ }
+        
+        window.switchTab = (event, tabName) => {
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
+            document.getElementById(tabName).style.display = 'block';
+        }
+        window.switchFormTab = (event, tabName) => {
+            document.querySelectorAll('.form-tab').forEach(t => t.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+            document.getElementById(tabName + '-section').classList.add('active');
+        }
+        window.openModal = function() {
+            if (!editingEnabled) return showNotification(translations[currentLang]['save-fail'], 'error');
+            document.getElementById('modal-title').innerHTML = `<span data-translate="add-edit-machine">${translations[currentLang]['add-edit-machine']}</span>`;
+            ['machine-id', 'machine-number', 'machine-notes', 'dismantling-date', 'transport-date', 'installation-date'].forEach(id => document.getElementById(id).value = '');
+             const checklistContainer = document.getElementById('checklist');
+            checklistContainer.innerHTML = '';
+            CHECKLIST_ITEMS.forEach(item => {
+                checklistContainer.innerHTML += `<li><input type="checkbox" id="checklist-${item.id}"><label for="checklist-${item.id}">${item.label}</label></li>`;
+            });
+            document.getElementById('machineModal').classList.add('active');
+        }
+        window.closeModal = () => document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
+        window.unlockEditing = function() { /* ... existing code ... */ }
+        function lockEditing() { /* ... existing code ... */ }
+
+        function showNotification(message, type = 'success') {
+            const n = document.getElementById('notification');
+            n.textContent = message;
+            n.className = `notification ${type} show`;
+            setTimeout(() => n.classList.remove('show'), 3000);
+        }
+
+        function setupEventListeners() {
+            document.getElementById('search-input').addEventListener('input', renderAllViews);
+        }
+
+        function populateSelectOptions() {
+            for(const [id, options] of Object.entries(DYNAMIC_OPTIONS)) {
+                const select = document.getElementById(id);
+                if(select) options.forEach(opt => select.add(new Option(opt, opt)));
+            }
+        }
+
+        window.switchLanguage = function(lang) {
+            currentLang = lang;
+            document.documentElement.lang = lang;
+            document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+            const selector = { 'pl': 1, 'nl': 2, 'en': 3 }[lang];
+            document.querySelector(`.lang-btn:nth-child(${selector})`).classList.add('active');
+            document.querySelectorAll('[data-translate]').forEach(el => {
+                const key = el.getAttribute('data-translate');
+                if (translations[lang][key]) el.textContent = translations[lang][key];
+            });
+            document.querySelectorAll('[data-translate-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-translate-placeholder');
+                if (translations[lang][key]) el.placeholder = translations[lang][key];
+            });
+        }
+        
+        async function seedDatabase() { /* ... existing code ... */ }
+    </script>
+</body>
+</html>
+
